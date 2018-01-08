@@ -11,11 +11,11 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter <RecyclerViewAdapter.ViewHolder>{
-    ArrayList<String> kr=new ArrayList<String>();
+    ArrayList<Markerpoints> kr=new ArrayList<>();
 
 
 
-    public RecyclerViewAdapter(ArrayList<String> ar) {
+    public RecyclerViewAdapter(ArrayList<Markerpoints> ar) {
         this.kr =ar;
     }
 
@@ -31,7 +31,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter <RecyclerViewAdapt
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         TextView name1=holder.name;
-        name1.setText(kr.get(position));
+        name1.setText(kr.get(position).getPlace()+ " : " + kr.get(position).getViccnity());
 
 
     }

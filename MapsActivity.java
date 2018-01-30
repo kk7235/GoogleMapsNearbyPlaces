@@ -1,7 +1,9 @@
 package com.androidtutorialpoint.googlemapsnearbyplaces;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -39,6 +41,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -58,13 +61,15 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements botttomcallback,OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener,
-        LocationListener {   int count = 0;int width;
+        LocationListener {
+    private static final String TAG ="" ;
+    int count = 0;int width;
     int height;
 String currentLat ,currentLon;
 Marker current,temp;    LatLng latlong1;
     private GoogleMap mMap;
     double  latitude;
-    double longitude;
+    double longitude;   ProgressDialog progressDialog;
     private int PROXIMITY_RADIUS = 10000;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
@@ -94,9 +99,10 @@ distance=findViewById(R.id.txt_distance);
         BottomSheetBehavior bt=BottomSheetBehavior.from((View)parentview.getParent());
         bt.setPeekHeight(500);
         b.show();
-        icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_red);
-        iconSelected = BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_red_white);
-navigate=findViewById(R.id.compass);
+        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+        iconSelected =BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
+navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this);
+        progressDialog.show();
         mButton1 = (Button) findViewById(R.id.button2);
         mButton1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,8 +217,20 @@ navigate=findViewById(R.id.compass);
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-          mMap.setOnMarkerClickListener(this);
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+          mMap.setOnMarkerClickListener(this);try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.mapstyle_night));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
+        //mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -299,7 +317,7 @@ navigate=findViewById(R.id.compass);
         markerOptions.position(latLng);
         latlong1=latLng;
         markerOptions.title("Current Position");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.man4));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
 
         //move map camera
@@ -311,7 +329,7 @@ navigate=findViewById(R.id.compass);
 
         Log.d("onClick", "Button is Clicked");
         //mMap.clear();
-        String url = getUrl(latitude, longitude,"school");
+        String url = getUrl(latitude, longitude,"bar");
         Object[] DataTransfer = new Object[3];
         DataTransfer[0] = mMap;
         DataTransfer[1] = url;
@@ -423,7 +441,7 @@ navigate=findViewById(R.id.compass);
 
            mMap.addMarker(markerOptions);
            markerOps.add(markerOptions);
-            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+           markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
            //move map camera
            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
@@ -443,9 +461,11 @@ navigate=findViewById(R.id.compass);
             bounds = builder.build();
 
     }
+
            r.setAdapter(new RecyclerViewAdapter(e));
 
-             r.setLayoutManager(new LinearLayoutManager(this));}
+             r.setLayoutManager(new LinearLayoutManager(this));
+      }
 
 
 
@@ -498,7 +518,7 @@ navigate=findViewById(R.id.compass);
     public boolean onMarkerClick(Marker marker1) {
         storeName.setText(marker1.getTitle());
 
-
+        progressDialog.dismiss();
         distance.setText(String.valueOf(getDistanceFromLatLonInKm(currentLat, currentLon, String.valueOf(marker1.getPosition().latitude), String.valueOf(marker1.getPosition().longitude))) + " Km");
         current = marker1;
      //   bottomtile.setVisibility(View.VISIBLE);

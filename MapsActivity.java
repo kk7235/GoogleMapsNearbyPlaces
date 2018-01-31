@@ -15,8 +15,9 @@ import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.LinearLayoutManager;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -58,17 +59,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import me.relex.circleindicator.CircleIndicator;
+
 public class MapsActivity extends FragmentActivity implements botttomcallback,OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener,
         LocationListener {
     private static final String TAG ="" ;
     int count = 0;int width;
-    int height;
+    int height;CircleIndicator circleIndicator;
 String currentLat ,currentLon;
 Marker current,temp;    LatLng latlong1;
     private GoogleMap mMap;
-    double  latitude;
+    double  latitude;    ViewPager viewPager;
     double longitude;   ProgressDialog progressDialog;
     private int PROXIMITY_RADIUS = 10000;
     GoogleApiClient mGoogleApiClient;
@@ -84,33 +87,35 @@ Marker current,temp;    LatLng latlong1;
     Button mButton1;    LatLng origin, dest;
     TextView  iv_trigger,storeName, distance;    BitmapDescriptor icon = null, iconSelected = null;
     CoordinatorLayout coordinatorLayout;
-
+PagerAdapter pagerAdapter;    private FragmentManager fragmentManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);      MapsInitializer.initialize(MapsActivity.this);
         setContentView(R.layout.activity_maps);
         View bottomSheet = findViewById(R.id.bottom);
+        fragmentManager = this.getSupportFragmentManager();
        b=new BottomSheetDialog(MapsActivity.this);
 storeName=findViewById(R.id.txt_store_title);
 distance=findViewById(R.id.txt_distance);
        parentview=getLayoutInflater().inflate(R.layout.bottomsheet,null);
        b.setContentView(parentview);
-        r=(RecyclerView) b.findViewById(R.id.recycle);
+      viewPager= (ViewPager) b.findViewById(R.id.home_viewpager1);
+       circleIndicator= (CircleIndicator) b.findViewById(R.id.indicator);
+
         BottomSheetBehavior bt=BottomSheetBehavior.from((View)parentview.getParent());
-        bt.setPeekHeight(500);
+        bt.setPeekHeight(600);
         b.show();
         icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
         iconSelected =BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
-navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this);
+        navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this);
         progressDialog.show();
         mButton1 = (Button) findViewById(R.id.button2);
         mButton1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //  BottomSheetDialog b=new BottomSheetDialog(MapsActivity.this);
-
+               // BottomSheetDialog b=new BottomSheetDialog(MapsActivity.this);
                 BottomSheetBehavior bt=BottomSheetBehavior.from((View)parentview.getParent());
-                bt.setPeekHeight(300);
+                bt.setPeekHeight(600);
                 b.show();
             }
         });
@@ -118,9 +123,6 @@ navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this)
         navigate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
-
                 dest = current.getPosition();
 
                 try {
@@ -141,36 +143,8 @@ navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this)
             }
         });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         // Persistent BottomSheet
  //       init_persistent_bottomsheet();
-
-
-
-
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
@@ -434,42 +408,39 @@ navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this)
            MarkerOptions markerOptions = new MarkerOptions();
            markerOptions.position(latLng);
            markerOptions.title(m.getPlace()+ " : " + m.getViccnity());
-
        //    ar.add(placeName + " : " + vicinity);    for (MarkerOptions markerOptions : markerOptionsArrayList) {
-
-
-
            mMap.addMarker(markerOptions);
            markerOps.add(markerOptions);
            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
            //move map camera
            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
-
        }
         for (MarkerOptions markerOptions : markerOps) {
             markersArrayList.add(mMap.addMarker(markerOptions));
         }
         for (Marker marker : markersArrayList) {
-
                 onMarkerClick(marker);
-
         }      LatLngBounds.Builder builder = new LatLngBounds.Builder();       if (markersArrayList.size() > 0) {
             for (Marker marker : markersArrayList) {
                 builder.include(marker.getPosition());
             }
             bounds = builder.build();
-
     }
 
-           r.setAdapter(new RecyclerViewAdapter(e));
+        if (e.size() > 0) {
 
-             r.setLayoutManager(new LinearLayoutManager(this));
-      }
+            pagerAdapter = new PagerAdapter(fragmentManager,e);
+            viewPager.setAdapter(pagerAdapter);
+            viewPager.setClipToPadding(false);
+            circleIndicator.setViewPager(viewPager);
+            viewPager.setOffscreenPageLimit(4);
+        }
+    }
 
 
 
-     public void init_persistent_bottomsheet() {
+     public void intit_persistent_bottomsheet() {
         View persistentbottomSheet = coordinatorLayout.findViewById(R.id.bottomsheet);
 
      //  RelativeLayout iv_trigger =(RelativeLayout) persistentbottomSheet.findViewById(R.id.iv_fab);

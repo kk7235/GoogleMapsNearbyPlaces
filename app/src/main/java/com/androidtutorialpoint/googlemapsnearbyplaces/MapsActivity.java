@@ -86,7 +86,7 @@ Marker current,temp;    LatLng latlong1;
     ArrayList<MarkerOptions> markerOps=new ArrayList<>();
     Button mButton1;    LatLng origin, dest;
     TextView  iv_trigger,storeName, distance;    BitmapDescriptor icon = null, iconSelected = null;
-    CoordinatorLayout coordinatorLayout;
+    CoordinatorLayout coordinatorLayout;ArrayList<Markerpoints> er=new ArrayList<>();
 PagerAdapter pagerAdapter;    private FragmentManager fragmentManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -429,12 +429,9 @@ distance=findViewById(R.id.txt_distance);
     }
 
         if (e.size() > 0) {
+this.er=e;
 
-            pagerAdapter = new PagerAdapter(fragmentManager,e);
-            viewPager.setAdapter(pagerAdapter);
-            viewPager.setClipToPadding(false);
-            circleIndicator.setViewPager(viewPager);
-            viewPager.setOffscreenPageLimit(4);
+another();
         }
     }
 
@@ -484,12 +481,17 @@ distance=findViewById(R.id.txt_distance);
             });
 
     }
-
+  public void another() {   pagerAdapter = new PagerAdapter(fragmentManager,er);
+      viewPager.setAdapter(pagerAdapter);
+      viewPager.setClipToPadding(false);
+      circleIndicator.setViewPager(viewPager);
+      viewPager.setOffscreenPageLimit(4);}
     @Override
     public boolean onMarkerClick(Marker marker1) {
         storeName.setText(marker1.getTitle());
 
         progressDialog.dismiss();
+
         distance.setText(String.valueOf(getDistanceFromLatLonInKm(currentLat, currentLon, String.valueOf(marker1.getPosition().latitude), String.valueOf(marker1.getPosition().longitude))) + " Km");
         current = marker1;
      //   bottomtile.setVisibility(View.VISIBLE);

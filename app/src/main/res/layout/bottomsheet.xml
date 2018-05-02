@@ -7,41 +7,29 @@
     android:layout_alignParentBottom="true"
     android:background="@color/grey_dark2"
     android:orientation="vertical"
-android:padding="2dp"
+    android:padding="2dp"
     app:behavior_hideable="false"
     app:behavior_peekHeight="300px"
     app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
-<TextView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Details"
-    android:textSize="20dp"
-android:padding="1dp"
-    android:layout_marginBottom="10dp"
-    android:textColor="@color/black"
-    android:gravity="center"/>
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/home_viewpager1"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <me.relex.circleindicator.CircleIndicator
-        android:id="@+id/indicator"
-        android:layout_width="wrap_content"
-        android:layout_height="12dp"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="20dp"
-        android:gravity="center"
-        app:ci_drawable="@drawable/circle_pager_selected_red"
-        app:ci_drawable_unselected="@drawable/circle_pager_unselected"
-        app:ci_height="6dp"
-        app:ci_width="6dp" />
 
 
+   <TextView
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:text=""
+       android:background="@color/grey_dark2"
+       android:textSize="2dp"
+       android:padding="1dp"
+       android:layout_marginBottom="10dp"
+
+       android:gravity="center"/>
+
+   <android.support.v7.widget.RecyclerView
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:id="@+id/recycle"/>
 
 
 
 
 </LinearLayout>
-

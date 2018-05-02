@@ -4,26 +4,24 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import java.util.ArrayList;
-
 /**
  * Created by Anooj on 18-Oct-16.
  */
 
-public class PagerAdapter extends FragmentPagerAdapter {
+public class PagerAdapter2 extends FragmentPagerAdapter {
 
     int pageCount;
-    ArrayList<Markerpoints> kr=new ArrayList<>();
+  String kr;
 
-    public PagerAdapter(FragmentManager fragmentManager,ArrayList<Markerpoints> ar) {
+    public PagerAdapter2(FragmentManager fragmentManager,String ar) {
         super(fragmentManager);
         this.kr=ar;
-        this.pageCount = ar.size();
+        this.pageCount = 4;
     }
 
     @Override
     public Fragment getItem(int position) {
-        return PagerItemFragment.newInstance(position,kr);
+        return PagerItemFragment2.newInstance(position,kr);
     }
 
     @Override

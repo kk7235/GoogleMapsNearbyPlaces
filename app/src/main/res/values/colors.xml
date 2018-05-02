@@ -11,11 +11,12 @@
     <color name="transparent">#00ffffff</color>
 
     <color name="black_overlay">#96000000</color>
-    <color name="grey_dark2">#f5f5f5</color>
+    <color name="grey_dark2">#00e6e6e6</color>
     <color name="grey_dark1">#403f3f</color>
     <color name="grey_dark">#464646</color>
     <color name="grey_light">#ffffff</color>
     <color name="yellow_light">#f5f1e8</color>
+    <color name="grey">#c4c3c0</color>
 
 
     <color name="black">#020202</color>
@@ -27,7 +28,7 @@
     <color name="background">#8c4848</color>
     <color name="center">#ff0</color>
     <color name="greenish">#c62cba2c</color>
-
+    <color name="greenish1">#227b22</color>
     <color name="grand_red">#ED121D</color>
 
     <color name="black1">#b9020202</color>

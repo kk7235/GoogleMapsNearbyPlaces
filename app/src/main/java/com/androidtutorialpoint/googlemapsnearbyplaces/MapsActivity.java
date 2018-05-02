@@ -1,15 +1,15 @@
 package com.androidtutorialpoint.googlemapsnearbyplaces;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.CoordinatorLayout;
@@ -18,17 +18,23 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -42,7 +48,6 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -58,64 +63,102 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import me.relex.circleindicator.CircleIndicator;
 
-public class MapsActivity extends FragmentActivity implements botttomcallback,OnMapReadyCallback,
+public class MapsActivity extends FragmentActivity implements botttomcallback, OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMarkerClickListener,
         LocationListener {
-    private static final String TAG ="" ;
-    int count = 0;int width;
-    int height;CircleIndicator circleIndicator;
-String currentLat ,currentLon;
-Marker current,temp;    LatLng latlong1;
-    private GoogleMap mMap;
-    double  latitude;    ViewPager viewPager;
-    double longitude;   ProgressDialog progressDialog;
-    private int PROXIMITY_RADIUS = 10000;
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    private static final String TAG = "";
+    int count = 0;
+    int width;
+    int height;
+
+    String currentLat, currentLon;
+
+    ViewPager viewPager;
+
+    CircleIndicator circleIndicator;
+    Marker current, temp;
+    LatLng latlong1;
+    double latitude;
+
+    double longitude;
+    ProgressDialog progressDialog;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
-    Marker mCurrLocationMarker;ImageView navigate;
+    Marker mCurrLocationMarker;
+    ImageView navigate;
     LocationRequest mLocationRequest;
-    private BottomSheetBehavior mBottomSheetBehavior1;
     BottomSheetDialog b;
-    TextView btexview; View parentview;
-    View bottomSheet;LatLngBounds bounds;
-    RecyclerView r;    ArrayList<Marker> markersArrayList = new ArrayList<>();
-    ArrayList<MarkerOptions> markerOps=new ArrayList<>();
-    Button mButton1;    LatLng origin, dest;
-    TextView  iv_trigger,storeName, distance;    BitmapDescriptor icon = null, iconSelected = null;
-    CoordinatorLayout coordinatorLayout;ArrayList<Markerpoints> er=new ArrayList<>();
-PagerAdapter pagerAdapter;    private FragmentManager fragmentManager;
+    TextView btexview;
+    View parentview;
+    View bottomSheet;
+    LatLngBounds bounds;
+    RecyclerView recycle;
+    ArrayList<Markerpoints> markersArray = new ArrayList<>();
+    ArrayList<Marker> markersArrayList = new ArrayList<>();
+    ArrayList<MarkerOptions> markerOps = new ArrayList<>();
+    TextView mButton1;
+    LatLng origin, dest;
+    FrameLayout frame;
+    TextView iv_trigger, storeName, distance;
+    BitmapDescriptor icon = null, iconSelected = null;
+    CoordinatorLayout coordinatorLayout;
+    ArrayList<Markerpoints> er = new ArrayList<>();
+
+    BottomSheetBehavior bt;
+    PagerAdapter2 pagerAdapter2;
+    PendingIntent mGeofencePendingIntent;
+public List<Geofence> mGeofenceList;
+    private GoogleMap mMap;
+    private int PROXIMITY_RADIUS = 10000;
+    private BottomSheetBehavior mBottomSheetBehavior1;
+    private FragmentManager fragmentManager;
+    /*   @BindView(R.id.bottom_sheet)
+       LinearLayout layoutBottomSheet;*/
+    RelativeLayout re;
+    BottomSheetBehavior sheetBehavior;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);      MapsInitializer.initialize(MapsActivity.this);
+        super.onCreate(savedInstanceState);
+        MapsInitializer.initialize(MapsActivity.this);
         setContentView(R.layout.activity_maps);
         View bottomSheet = findViewById(R.id.bottom);
         fragmentManager = this.getSupportFragmentManager();
-       b=new BottomSheetDialog(MapsActivity.this);
-storeName=findViewById(R.id.txt_store_title);
-distance=findViewById(R.id.txt_distance);
-       parentview=getLayoutInflater().inflate(R.layout.bottomsheet,null);
-       b.setContentView(parentview);
-      viewPager= (ViewPager) b.findViewById(R.id.home_viewpager1);
-       circleIndicator= (CircleIndicator) b.findViewById(R.id.indicator);
+        re = findViewById(R.id.bottom_layout);
+        b = new BottomSheetDialog(MapsActivity.this);
+        storeName = findViewById(R.id.txt_store_title);
+        distance = findViewById(R.id.txt_distance);
+        parentview = getLayoutInflater().inflate(R.layout.bottomsheet, null);
+        b.setContentView(parentview);
+        recycle = (RecyclerView) b.findViewById(R.id.recycle);
 
-        BottomSheetBehavior bt=BottomSheetBehavior.from((View)parentview.getParent());
-        bt.setPeekHeight(600);
+        mGeofencePendingIntent=PendingIntent.getActivity(
+                getApplicationContext(),
+                0,
+                new Intent(), // add this
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        BottomSheetBehavior bt = BottomSheetBehavior.from((View) parentview.getParent());
+        bt.setPeekHeight(550);
         b.show();
         icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
-        iconSelected =BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
-        navigate=findViewById(R.id.compass);   progressDialog = new ProgressDialog(this);
+        iconSelected = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
+        navigate = findViewById(R.id.compass);
+        progressDialog = new ProgressDialog(this);
         progressDialog.show();
-        mButton1 = (Button) findViewById(R.id.button2);
+        mButton1 = (TextView) findViewById(R.id.button2);
         mButton1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               // BottomSheetDialog b=new BottomSheetDialog(MapsActivity.this);
-                BottomSheetBehavior bt=BottomSheetBehavior.from((View)parentview.getParent());
-                bt.setPeekHeight(600);
+                // BottomSheetDialog b=new BottomSheetDialog(MapsActivity.this);
+                BottomSheetBehavior bt = BottomSheetBehavior.from((View) parentview.getParent());
+                bt.setPeekHeight(550);
                 b.show();
             }
         });
@@ -144,7 +187,7 @@ distance=findViewById(R.id.txt_distance);
         });
 
         // Persistent BottomSheet
- //       init_persistent_bottomsheet();
+        //       init_persistent_bottomsheet();
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
@@ -154,9 +197,8 @@ distance=findViewById(R.id.txt_distance);
         if (!CheckGooglePlayServices()) {
             Log.d("onCreate", "Finishing test case since Google Play Services are not available");
             finish();
-        }
-        else {
-            Log.d("onCreate","Google Play Services available.");
+        } else {
+            Log.d("onCreate", "Google Play Services available.");
         }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -168,8 +210,8 @@ distance=findViewById(R.id.txt_distance);
     private boolean CheckGooglePlayServices() {
         GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
         int result = googleAPI.isGooglePlayServicesAvailable(this);
-        if(result != ConnectionResult.SUCCESS) {
-            if(googleAPI.isUserResolvableError(result)) {
+        if (result != ConnectionResult.SUCCESS) {
+            if (googleAPI.isUserResolvableError(result)) {
                 googleAPI.getErrorDialog(this, result,
                         0).show();
             }
@@ -177,7 +219,6 @@ distance=findViewById(R.id.txt_distance);
         }
         return true;
     }
-
 
     /**
      * Manipulates the map once available.
@@ -191,20 +232,21 @@ distance=findViewById(R.id.txt_distance);
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-          mMap.setOnMarkerClickListener(this);try {
+        mMap.setOnMarkerClickListener(this);
+ /*    try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
-            boolean success = googleMap.setMapStyle(
+          boolean success = googleMap.setMapStyle(
                     MapStyleOptions.loadRawResourceStyle(
-                            this, R.raw.mapstyle_night));
+                            this, R.raw.mapstyle_night1));
 
             if (!success) {
                 Log.e(TAG, "Style parsing failed.");
             }
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
-        }
-        //mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        }*/
+// mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
 
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -214,8 +256,7 @@ distance=findViewById(R.id.txt_distance);
                 buildGoogleApiClient();
                 mMap.setMyLocationEnabled(true);
             }
-        }
-        else {
+        } else {
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
@@ -229,9 +270,8 @@ distance=findViewById(R.id.txt_distance);
             bounds = builder.build();
 
 
-
-
-    }}
+        }
+    }
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -283,13 +323,13 @@ distance=findViewById(R.id.txt_distance);
 
         //Place current location marker
         latitude = location.getLatitude();
-        currentLat=String.valueOf(latitude);
+        currentLat = String.valueOf(latitude);
         longitude = location.getLongitude();
-        currentLon=String.valueOf(longitude);
+        currentLon = String.valueOf(longitude);
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
-        latlong1=latLng;
+        latlong1 = latLng;
         markerOptions.title("Current Position");
         markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.man4));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
@@ -298,12 +338,12 @@ distance=findViewById(R.id.txt_distance);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
 
-        Toast.makeText(MapsActivity.this,"Your Current Location", Toast.LENGTH_LONG).show();
+        Toast.makeText(MapsActivity.this, "Your Current Location", Toast.LENGTH_LONG).show();
         String Hospital = "hospital";
 
         Log.d("onClick", "Button is Clicked");
         //mMap.clear();
-        String url = getUrl(latitude, longitude,"bar");
+        String url = getUrl(latitude, longitude, "bar");
         Object[] DataTransfer = new Object[3];
         DataTransfer[0] = mMap;
         DataTransfer[1] = url;
@@ -312,13 +352,7 @@ distance=findViewById(R.id.txt_distance);
         GetNearbyPlacesData getNearbyPlacesData = new GetNearbyPlacesData();
         getNearbyPlacesData.execute(DataTransfer);
 
-        Toast.makeText(MapsActivity.this,"Nearby driving school", Toast.LENGTH_LONG).show();
-
-
-
-
-
-
+        Toast.makeText(MapsActivity.this, "Nearby driving school", Toast.LENGTH_LONG).show();
 
 
         //stop location updates
@@ -335,8 +369,7 @@ distance=findViewById(R.id.txt_distance);
 
     }
 
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-    public boolean checkLocationPermission(){
+    public boolean checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -403,98 +436,97 @@ distance=findViewById(R.id.txt_distance);
 
     @Override
     public void read(ArrayList<Markerpoints> e) {
-       for(Markerpoints m :e){
-           LatLng latLng=new LatLng(m.getLat(),m.getLng());
-           MarkerOptions markerOptions = new MarkerOptions();
-           markerOptions.position(latLng);
-           markerOptions.title(m.getPlace()+ " : " + m.getViccnity());
-       //    ar.add(placeName + " : " + vicinity);    for (MarkerOptions markerOptions : markerOptionsArrayList) {
-           mMap.addMarker(markerOptions);
-           markerOps.add(markerOptions);
-           markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-           //move map camera
-           mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        for (Markerpoints m : e) {
+            LatLng latLng = new LatLng(m.getLat(), m.getLng());
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.title(m.getPlace());
+            //    ar.add(placeName + " : " + vicinity);    for (MarkerOptions markerOptions : markerOptionsArrayList) {
+            mMap.addMarker(markerOptions);
+            markerOps.add(markerOptions);
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            //move map camera
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
-       }
+        }
         for (MarkerOptions markerOptions : markerOps) {
             markersArrayList.add(mMap.addMarker(markerOptions));
         }
         for (Marker marker : markersArrayList) {
-                onMarkerClick(marker);
-        }      LatLngBounds.Builder builder = new LatLngBounds.Builder();       if (markersArrayList.size() > 0) {
+            onMarkerClick(marker);
+        }
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        if (markersArrayList.size() > 0) {
             for (Marker marker : markersArrayList) {
                 builder.include(marker.getPosition());
             }
             bounds = builder.build();
-    }
-
-        if (e.size() > 0) {
-this.er=e;
-
-another();
         }
-    }
 
-
-
-     public void intit_persistent_bottomsheet() {
-        View persistentbottomSheet = coordinatorLayout.findViewById(R.id.bottomsheet);
-
-     //  RelativeLayout iv_trigger =(RelativeLayout) persistentbottomSheet.findViewById(R.id.iv_fab);
-        final BottomSheetBehavior behavior = BottomSheetBehavior.from(persistentbottomSheet);
-
-
-        iv_trigger.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-                    behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                } else {
-                    behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        if (e.size() > 0) {    mGeofenceList = new ArrayList();
+            markersArray = e;
+            PublicValues.m = markersArray;
+            for (Markerpoints geofenceDomain : e) {
+                createGeofences(geofenceDomain.getLat(), geofenceDomain.getLng(), 13500);}
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
                 }
-            }
-        });
-        if (behavior != null)
-            behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-                @Override
-                public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                    //showing the different states
-                    switch (newState) {
-                        case BottomSheetBehavior.STATE_HIDDEN:
-                            break;
-                        case BottomSheetBehavior.STATE_EXPANDED:
-                            break;
-                        case BottomSheetBehavior.STATE_COLLAPSED:
-                            break;
-                        case BottomSheetBehavior.STATE_DRAGGING:
-                            break;
-                        case BottomSheetBehavior.STATE_SETTLING:
-                            break;
+                LocationServices.GeofencingApi.addGeofences(
+                        mGoogleApiClient,
+                        getGeofencingRequest(),
+                        getGeofencePendingIntent()
+                ).setResultCallback(new ResultCallback<Status>() {
+
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            Log.i(TAG, "Saving GeofenceDomain");
+
+                        } else {
+                            Log.e(TAG, "Registering geofence failed: " + status.getStatusMessage() +
+                                    " : " + status.getStatusCode());
+                        }
                     }
-                }
+                });
 
-                @Override
-                public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                    // React to dragging events
-
-                }
-            });
+            recycle.setAdapter(new RecyclerViewAdapter(e,getApplicationContext()));
+recycle.setLayoutManager(new GridLayoutManager(MapsActivity.this, 2));
+        }
 
     }
-  public void another() {   pagerAdapter = new PagerAdapter(fragmentManager,er);
-      viewPager.setAdapter(pagerAdapter);
-      viewPager.setClipToPadding(false);
-      circleIndicator.setViewPager(viewPager);
-      viewPager.setOffscreenPageLimit(4);}
+
+
+
+    public void another() {
+        pagerAdapter2 = new PagerAdapter2(getSupportFragmentManager(), "er");
+        viewPager.setAdapter(pagerAdapter2);
+        viewPager.setClipToPadding(false);
+        circleIndicator.setViewPager(viewPager);
+        viewPager.setOffscreenPageLimit(1);
+    }
+
     @Override
-    public boolean onMarkerClick(Marker marker1) {
-        storeName.setText(marker1.getTitle());
+    public boolean onMarkerClick(Marker marker1) {String a="";
+        for(int i=0;i<markersArray.size();i++)
+        {if(marker1.getTitle().equals(markersArray.get(i).getPlace()))
+        {a=markersArray.get(i).getPlace()+'\n'+markersArray.get(i).getViccnity();
+        re.setVisibility(View.VISIBLE);}
+        }
+
+        storeName.setText(a);
 
         progressDialog.dismiss();
 
         distance.setText(String.valueOf(getDistanceFromLatLonInKm(currentLat, currentLon, String.valueOf(marker1.getPosition().latitude), String.valueOf(marker1.getPosition().longitude))) + " Km");
         current = marker1;
-     //   bottomtile.setVisibility(View.VISIBLE);
+        //   bottomtile.setVisibility(View.VISIBLE);
         if (count == 0) {
             marker1.setIcon(iconSelected);
             temp = marker1;
@@ -509,51 +541,15 @@ another();
         }
         return false;
     }
-    public static float getDistanceFromLatLonInKm(String currentLat, String currentLon, String otherLat, String otherLon) {
-        try {
-            String distance = "0";
-            if (!currentLat.isEmpty() && !currentLon.isEmpty() && !otherLat.isEmpty() && !otherLon.isEmpty()) {
 
-                Location currentLocation = new Location("locA");
-                currentLocation.setLatitude(Double.parseDouble(currentLat));
-                currentLocation.setLongitude(Double.parseDouble(currentLon));
-
-                Location otherLocation = new Location("locB");
-                otherLocation.setLatitude(Double.parseDouble(otherLat));
-                otherLocation.setLongitude(Double.parseDouble(otherLon));
-
-                distance = String.format("%.2f", currentLocation.distanceTo(otherLocation) / 1000);
-
-            }
-            return Float.parseFloat(distance);
-
-        } catch (NumberFormatException ne) {
-            return 1;
-        }
-    }
-
-    public static float getDistanceFromLatLonInKm(Double currentLat, Double currentLon, Double otherLat, Double otherLon) {
-
-        String distance = "";
-        //  if (!currentLat.isEmpty() && !currentLon.isEmpty() && !otherLat.isEmpty() && !otherLon.isEmpty()) {
-        Location currentLocation = new Location("locA");
-        currentLocation.setLatitude(currentLat);
-        currentLocation.setLongitude(currentLon);
-
-        Location otherLocation = new Location("locB");
-        otherLocation.setLatitude(otherLat);
-        otherLocation.setLongitude(otherLon);
-
-        distance = String.format("%.2f", currentLocation.distanceTo(otherLocation) / 1000);
-        //  }
-        return Float.parseFloat(distance);
-    }
     private void swap(Marker current, Marker temp) {
         temp.setIcon(icon);
         temp.hideInfoWindow();
         current.setIcon(iconSelected);
         current.showInfoWindow();
-    }   private String getDirectionsUrl(LatLng origin, LatLng dest) {
+    }
+
+    private String getDirectionsUrl(LatLng origin, LatLng dest) {
 
         // Origin of route
         String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
@@ -576,35 +572,6 @@ another();
         return url;
     }
 
-    private class FetchUrl extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... url) {
-
-            // For storing data from web service
-            String data = "";
-
-            try {
-                // Fetching the data from web service
-                data = downloadUrl(url[0]);
-                Log.d("Background Task data", data.toString());
-            } catch (Exception e) {
-                Log.d("Background Task", e.toString());
-            }
-            return data;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-            ParserTask parserTask = new ParserTask();
-
-            // Invokes the thread for parsing the JSON data
-            parserTask.execute(result);
-
-        }
-    }
     private String downloadUrl(String strUrl) throws IOException {
         String data = "";
         InputStream iStream = null;
@@ -641,7 +608,39 @@ another();
             urlConnection.disconnect();
         }
         return data;
-    }    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+    }
+
+    private class FetchUrl extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... url) {
+
+            // For storing data from web service
+            String data = "";
+
+            try {
+                // Fetching the data from web service
+                data = downloadUrl(url[0]);
+                Log.d("Background Task data", data.toString());
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTask parserTask = new ParserTask();
+
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
+
+        }
+    }
+
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
 
         // Parsing the data in non-ui thread
         @Override
@@ -738,6 +737,76 @@ another();
                 Log.d("onPostExecute", "without Polylines drawn");
             }
         }
+    }
+    public static float getDistanceFromLatLonInKm(String currentLat, String currentLon, String otherLat, String otherLon) {
+        try {
+            String distance = "0";
+            if (!currentLat.isEmpty() && !currentLon.isEmpty() && !otherLat.isEmpty() && !otherLon.isEmpty()) {
+
+                Location currentLocation = new Location("locA");
+                currentLocation.setLatitude(Double.parseDouble(currentLat));
+                currentLocation.setLongitude(Double.parseDouble(currentLon));
+
+                Location otherLocation = new Location("locB");
+                otherLocation.setLatitude(Double.parseDouble(otherLat));
+                otherLocation.setLongitude(Double.parseDouble(otherLon));
+
+                distance = String.format("%.2f", currentLocation.distanceTo(otherLocation) / 1000);
+
+            }
+            return Float.parseFloat(distance);
+
+        } catch (NumberFormatException ne) {
+            return 1;
+        }
+    }
+
+    public static float getDistanceFromLatLonInKm(Double currentLat, Double currentLon, Double otherLat, Double otherLon) {
+
+        String distance = "";
+        //  if (!currentLat.isEmpty() && !currentLon.isEmpty() && !otherLat.isEmpty() && !otherLon.isEmpty()) {
+        Location currentLocation = new Location("locA");
+        currentLocation.setLatitude(currentLat);
+        currentLocation.setLongitude(currentLon);
+
+        Location otherLocation = new Location("locB");
+        otherLocation.setLatitude(otherLat);
+        otherLocation.setLongitude(otherLon);
+
+        distance = String.format("%.2f", currentLocation.distanceTo(otherLocation) / 1000);
+        //  }
+        return Float.parseFloat(distance);
+    }
+    public void createGeofences(double latitude, double longitude, float radius) {
+        String id = UUID.randomUUID().toString();
+        Geofence fence = new Geofence.Builder()
+                .setRequestId(id)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |Geofence.GEOFENCE_TRANSITION_DWELL)
+                .setCircularRegion(latitude, longitude, radius)
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                .setLoiteringDelay(30000)
+                .build();
+        mGeofenceList.add(fence);
+    }
+
+    private GeofencingRequest getGeofencingRequest() {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+        builder.addGeofences(mGeofenceList);
+        return builder.build();
+    }
+
+    private PendingIntent getGeofencePendingIntent() {
+        // Reuse the PendingIntent if we already have it.
+        if (mGeofencePendingIntent != null) {
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+
+
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
+        // calling addGeofences() and removeGeofences().
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }
 

@@ -55,8 +55,8 @@ public class DataParser {
         String vicinity = "-NA-";
         String latitude = "";
         String longitude = "";
-        String reference = "";
-
+        String reference = "";String open="";
+String rating="";String photo=" ";
         Log.d("getPlace", "Entered");
 
         try {
@@ -66,6 +66,16 @@ public class DataParser {
             if (!googlePlaceJson.isNull("vicinity")) {
                 vicinity = googlePlaceJson.getString("vicinity");
             }
+            if (!googlePlaceJson.isNull("rating")) {
+               rating= googlePlaceJson.getString("rating");
+            }
+            if (!googlePlaceJson.isNull("photos")) {
+               photo=googlePlaceJson.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
+            }
+            if (!googlePlaceJson.isNull("opening_hours")) {
+             open = googlePlaceJson.getJSONObject("opening_hours").getString("open_now");
+            }
+
             latitude = googlePlaceJson.getJSONObject("geometry").getJSONObject("location").getString("lat");
             longitude = googlePlaceJson.getJSONObject("geometry").getJSONObject("location").getString("lng");
             reference = googlePlaceJson.getString("reference");
@@ -73,7 +83,10 @@ public class DataParser {
             googlePlaceMap.put("vicinity", vicinity);
             googlePlaceMap.put("lat", latitude);
             googlePlaceMap.put("lng", longitude);
+            googlePlaceMap.put("rating",rating);
+            googlePlaceMap.put("open",open);
             googlePlaceMap.put("reference", reference);
+            googlePlaceMap.put("photo",photo);
             Log.d("getPlace", "Putting Places");
         } catch (JSONException e) {
             Log.d("getPlace", "Error");

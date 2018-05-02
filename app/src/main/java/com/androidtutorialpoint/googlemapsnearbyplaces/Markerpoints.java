@@ -5,10 +5,38 @@ package com.androidtutorialpoint.googlemapsnearbyplaces;
  */
 
 public class Markerpoints {
-    Double lat,lng;
+    Double lat,lng;String rating,photo,open;
+
+
+    public String getOpen() {
+        return open;
+    }
+
+    public void setOpen(String open) {
+        this.open = open;
+    }
+
+    public String getPhoto() {
+
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
+    }
+
     String place,viccnity;
 
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
+
     public Double getLat() {
+
         return lat;
     }
 

@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Created by navneet on 23/7/16.
  */
-public class GetNearbyPlacesData extends AsyncTask<Object, String, String> {
+ public class GetNearbyPlacesData extends AsyncTask<Object, String, String> {
 
     String googlePlacesData;
     GoogleMap mMap;
@@ -57,6 +57,9 @@ public class GetNearbyPlacesData extends AsyncTask<Object, String, String> {
             double lng = Double.parseDouble(googlePlace.get("lng"));m.setLng(lng);
             String placeName = googlePlace.get("place_name");m.setPlace(placeName);
             String vicinity = googlePlace.get("vicinity");m.setViccnity(vicinity);
+            String rating= googlePlace.get("rating");m.setRating(rating);
+            String photo= googlePlace.get("photo");m.setPhoto(photo);
+            String open=googlePlace.get("open");m.setOpen(open);
             LatLng latLng = new LatLng(lat, lng);
             ar.add(m);
 
